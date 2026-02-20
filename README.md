@@ -21,9 +21,11 @@ The terminal is detected by walking up the `PPID` chain until a GUI app process 
 
 | Platform | Notification | Focus |
 |---|---|---|
-| macOS | `terminal-notifier` | `osascript` / System Events |
-| Linux | `dunstify` (with click) or `notify-send` | `xdotool` or `wmctrl` |
-| Windows | BurntToast (PowerShell) | `SetForegroundWindow` WinAPI |
+| macOS | `terminal-notifier` | click notification → `osascript` / System Events |
+| Linux | `dunstify` (with click) or `notify-send` | click notification → `xdotool` or `wmctrl` |
+| Windows | WinRT via PowerShell (no extra install) | auto-focus when notification fires¹ |
+
+> ¹ Windows security prevents running code on toast notification click without a registered COM activator. Instead, claude-ping focuses your terminal automatically at the moment the notification is sent.
 
 ### Terminal compatibility (macOS, tested)
 
@@ -53,7 +55,7 @@ No `.zshrc` or shell config changes needed. The plugin inherits your terminal's 
 
 ### Windows
 - Node.js ≥ 18
-- PowerShell (built-in); BurntToast module is auto-installed on first run
+- PowerShell 5.1+ (built-in on Windows 10/11) — no extra modules needed
 
 ## Installation
 

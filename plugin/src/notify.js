@@ -13,7 +13,8 @@ const platform = require('./platform/' + process.platform);
 
 function readStdin() {
   try {
-    return fs.readFileSync('/dev/stdin', 'utf8');
+    // fd 0 works cross-platform (Windows doesn't have /dev/stdin)
+    return fs.readFileSync(0, 'utf8');
   } catch {
     return '';
   }
