@@ -1,0 +1,9 @@
+{
+  "name": "ghostty-focus",
+  "description": "When Claude needs your attention, sends a macOS notification that focuses the exact Ghostty tab on click.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Prabhav Agrawal"
+  },
+  "homepage": "https://github.com/prabhavagrawal/ghostty-focus"
+}
