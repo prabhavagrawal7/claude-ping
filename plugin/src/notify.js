@@ -53,7 +53,7 @@ function main() {
 
   // Send the notification; clicking it will run focus.js
   const focusScript = path.join(__dirname, 'focus.js');
-  platform.notify(message, focusScript);
+  platform.notify(message, focusScript, terminalPid);
 }
 
 main();

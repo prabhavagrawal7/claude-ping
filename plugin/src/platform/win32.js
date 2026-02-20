@@ -4,9 +4,6 @@
 // Focus: SetForegroundWindow + AttachThreadInput trick
 
 const { spawnSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
 
 function ps(script, timeout = 12000) {
   const result = spawnSync(
@@ -21,14 +18,15 @@ function ps(script, timeout = 12000) {
  * Send a native Windows toast notification via WinRT (PowerShell).
  * No external modules (BurntToast etc.) required.
  *
- * Windows security prevents running code on toast click without a registered
- * COM activator, so we attempt to focus the terminal immediately when the
- * notification fires instead.
+ * Registers a `claude-ping:` custom URI protocol in HKCU so that clicking the
+ * toast launches `node focus.js "claude-ping:focus?pid=<PID>"`, which brings
+ * the correct terminal window to the foreground.
  *
  * @param {string} message
+ * @param {string} focusScriptPath  Absolute path to focus.js
+ * @param {number} [terminalPid]    PID of the terminal window to focus on click
  */
-// focusScriptPath is unused on Windows — focus is handled synchronously above.
-function notify(message, _focusScriptPath) {
+function notify(message, focusScriptPath, terminalPid) {
   // Sanitise for XML and for PowerShell single-quoted string
   const xmlSafe = message
     .replace(/&/g, '&amp;')
@@ -37,25 +35,39 @@ function notify(message, _focusScriptPath) {
     .replace(/"/g, '&quot;');
   const psSafe = xmlSafe.replace(/'/g, "''");
 
-  // WinRT toast — works on Windows 10/11 without any extra installs.
-  // Uses PowerShell's own AUMID so Windows always recognises the notifier.
+  // Protocol handler: conhost --headless runs node.exe without a visible
+  // console window (available since Windows 10 1903).
+  const handlerCmd = `conhost.exe --headless "${process.execPath}" "${focusScriptPath || ''}" "%1"`;
+  const handlerCmdPS = handlerCmd.replace(/'/g, "''");
+
+  // Toast attributes: if we have a PID, make clicking the toast launch the
+  // claude-ping: protocol URI; otherwise fall back to a plain toast.
+  let toastAttrs = '';
+  if (terminalPid) {
+    toastAttrs = ` activationType="protocol" launch="claude-ping:focus?pid=${terminalPid}"`;
+  }
+
+  // Single PowerShell invocation: register protocol handler + send toast.
   ps(`
+    # --- Register claude-ping: protocol handler in HKCU (idempotent, no admin) ---
+    $protoKey = 'HKCU:\\Software\\Classes\\claude-ping'
+    if (-not (Test-Path $protoKey)) { New-Item -Path $protoKey -Force | Out-Null }
+    Set-ItemProperty -Path $protoKey -Name '(Default)' -Value 'URL:claude-ping'
+    Set-ItemProperty -Path $protoKey -Name 'URL Protocol' -Value ''
+    $cmdKey = "$protoKey\\shell\\open\\command"
+    if (-not (Test-Path $cmdKey)) { New-Item -Path $cmdKey -Force | Out-Null }
+    Set-ItemProperty -Path $cmdKey -Name '(Default)' -Value '${handlerCmdPS}'
+
+    # --- Send WinRT toast notification ---
     [void][Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]
     [void][Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]
-    $xml = '<toast><visual><binding template="ToastGeneric"><text>Claude Code</text><text>${psSafe}</text></binding></visual><audio src="ms-winsoundevent:Notification.Default"/></toast>'
+    $xml = '<toast${toastAttrs}><visual><binding template="ToastGeneric"><text>Claude Code</text><text>${psSafe}</text></binding></visual><audio src="ms-winsoundevent:Notification.Default"/></toast>'
     $doc = [Windows.Data.Xml.Dom.XmlDocument]::new()
     $doc.LoadXml($xml)
     $toast = [Windows.UI.Notifications.ToastNotification]::new($doc)
     $aumid = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\\WindowsPowerShell\\v1.0\\powershell.exe'
     [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($aumid).Show($toast)
   `);
-
-  // Attempt to focus the terminal immediately.
-  try {
-    const pidFile = path.join(os.tmpdir(), 'claude_terminal_pid');
-    const terminalPid = parseInt(fs.readFileSync(pidFile, 'utf8').trim(), 10);
-    if (terminalPid && !isNaN(terminalPid)) focus(terminalPid);
-  } catch {}
 }
 
 /**
