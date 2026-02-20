@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Syntax check
+        run: |
+          node --check src/pid.js
+          node --check src/notify.js
+          node --check src/focus.js
+          node --check src/session-start.js
+          node --check src/session-end.js
+          node --check src/platform/darwin.js
+          node --check src/platform/linux.js
+          node --check src/platform/win32.js
+
+      - name: Run smoke tests
+        run: node test/smoke.js
