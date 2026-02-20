@@ -1,4 +1,4 @@
-# claude-focus
+# claude-ping
 
 A Claude Code plugin that sends a macOS notification when Claude needs your attention — and when you click it, **focuses the exact terminal window** where Claude is waiting.
 
