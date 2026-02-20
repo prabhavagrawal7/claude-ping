@@ -1,5 +1,5 @@
 {
-  "description": "Ghostty window focus: saves session window on start, sends click-to-focus notifications on stop.",
+  "description": "Click-to-focus notifications: sends Claude's message as a desktop notification; clicking it focuses the exact terminal or IDE where Claude is waiting.",
   "hooks": {
     "SessionStart": [
       {
@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/session_start.sh\""
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/src/session-start.js"
           }
         ]
       }
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/session_end.sh\""
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/src/session-end.js"
           }
         ]
       }
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh\""
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/src/notify.js"
           }
         ]
       }
@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh\""
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/src/notify.js"
           }
         ]
       }

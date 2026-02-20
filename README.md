@@ -1,85 +1,107 @@
 # claude-ping
 
-A Claude Code plugin that sends a macOS notification when Claude needs your attention — and when you click it, **focuses the exact terminal window** where Claude is waiting.
+A Claude Code plugin that sends a desktop notification when Claude needs your attention — and when you click it, **focuses the exact terminal window or IDE pane** where Claude is waiting.
 
-## Demo
+## Features
 
 - Notification shows Claude's **actual question**, not a generic "needs attention" message
-- Clicking the notification **brings the terminal to front** — works with any macOS terminal or IDE
+- Clicking the notification **brings the terminal to front** — works with any terminal or IDE
 - A **bell** highlights the tab even before you click
+- **Cross-platform**: macOS, Linux, and Windows
 
 ## How it works
 
 1. **`SessionStart` hook** — saves the terminal app's PID when Claude starts
-2. **`Stop` / `Notification` hooks** — reads Claude's last message from stdin, sends a macOS notification via `terminal-notifier`
-3. **On click** — uses `System Events` to focus the terminal by its PID
+2. **`Stop` / `Notification` hooks** — reads Claude's last message from stdin JSON, rings the TTY bell, and sends a notification
+3. **On click** — `focus.js` reads the saved PID and raises that window using platform-native APIs
 
-The terminal is detected by walking up the process tree until a macOS `.app/Contents/MacOS/` process is found — no hardcoded terminal names, works universally.
+The terminal is detected by walking up the `PPID` chain until a GUI app process is found — no hardcoded terminal names, works universally with any app.
 
-## Compatibility
+## Platform support
 
-Works with **any macOS terminal or IDE** (tested: Ghostty, Zed, VS Code):
+| Platform | Notification | Focus |
+|---|---|---|
+| macOS | `terminal-notifier` | `osascript` / System Events |
+| Linux | `dunstify` (with click) or `notify-send` | `xdotool` or `wmctrl` |
+| Windows | BurntToast (PowerShell) | `SetForegroundWindow` WinAPI |
 
-| App | Works |
-|---|---|
-| Ghostty | ✅ |
-| Zed | ✅ |
-| VS Code (integrated terminal) | ✅ |
-| iTerm2 | ✅ |
-| Terminal.app | ✅ |
-| WezTerm, Kitty, Alacritty, … | ✅ |
+### Terminal compatibility (macOS, tested)
+
+| App | Notification | Focus |
+|---|---|---|
+| Ghostty | ✅ | ✅ |
+| Zed | ✅ | ✅ |
+| VS Code (integrated terminal) | ✅ | ✅ |
+| iTerm2 | ✅ | ✅ |
+| Terminal.app | ✅ | ✅ |
+| WezTerm, Kitty, Alacritty, … | ✅ | ✅ |
 
 ## Requirements
 
-- macOS
+### macOS
+- Node.js ≥ 18
 - [`terminal-notifier`](https://github.com/julienXX/terminal-notifier): `brew install terminal-notifier`
-- `jq`: `brew install jq`
-- macOS Accessibility permission for `osascript`:
-  System Settings → Privacy & Security → Accessibility → enable for your terminal
+- Accessibility permission for `osascript`:
+  System Settings → Privacy & Security → Accessibility → enable for your terminal app
+
+### Linux
+- Node.js ≥ 18
+- `dunstify` (recommended, for click-to-focus) or `notify-send`
+- `xdotool` (recommended) or `wmctrl` for window focus
+
+### Windows
+- Node.js ≥ 18
+- PowerShell (built-in); BurntToast module is auto-installed on first run
 
 ## Installation
 
-### Option A: Load directly (dev / personal use)
+### Option A: Via Claude Code plugin marketplace
+
+```
+/plugin marketplace add prabhavagrawal7/claude-ping
+/plugin install claude-ping@prabhavagrawal7
+```
+
+### Option B: Manual (dev / personal use)
 
 ```bash
-git clone https://github.com/prabhavagrawal/claude-focus
-claude --plugin-dir ./claude-focus
+git clone https://github.com/prabhavagrawal7/claude-ping
+claude --plugin-dir ./claude-ping
 ```
 
-### Option B: Install permanently
+## Project structure
 
 ```
-/plugin install /path/to/claude-focus
-```
-
-## Plugin structure
-
-```
-claude-focus/
+claude-ping/
 ├── .claude-plugin/
 │   └── plugin.json          # plugin metadata
 ├── hooks/
 │   └── hooks.json           # SessionStart, SessionEnd, Stop, Notification hooks
-├── scripts/
-│   ├── session_start.sh     # saves terminal PID at session start
-│   ├── session_end.sh       # cleans up on session end
-│   ├── notify.sh            # parses Claude's message, sends notification
-│   └── focus_window.sh      # focuses the terminal on notification click
+├── src/
+│   ├── notify.js            # Stop/Notification hook: parses message, finds PID, notifies
+│   ├── focus.js             # Notification click handler: focuses the terminal window
+│   ├── session-start.js     # SessionStart hook: saves terminal PID
+│   ├── session-end.js       # SessionEnd hook: cleans up
+│   ├── pid.js               # Cross-platform process tree walker
+│   └── platform/
+│       ├── darwin.js        # macOS: terminal-notifier + osascript
+│       ├── linux.js         # Linux: dunstify/notify-send + xdotool/wmctrl
+│       └── win32.js         # Windows: BurntToast + SetForegroundWindow
 └── README.md
 ```
 
 ## How the PID trick works
 
-Every macOS GUI app runs from `*.app/Contents/MacOS/*`. When a hook fires, the script walks up the `PPID` chain:
+Every macOS GUI app runs from `*.app/Contents/MacOS/*`. When a hook fires, `pid.js` walks up the `PPID` chain:
 
 ```
-notification click
-    → focus_window.sh
-        → osascript: set frontmost of (process whose unix id is <PID>) to true
-
-hook fires (Stop/Notification)
-    → notify.sh walks: hook → zsh → claude → login → /Applications/App.app/Contents/MacOS/...
-                                                       ^^^^^^^^^^^^ saved as TERMINAL_PID
+hook fires (subprocess of Claude)
+  → node → zsh → login → /Applications/Ghostty.app/Contents/MacOS/ghostty
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          detected as GUI app → saved as terminalPid
 ```
 
-No terminal name guessing. No hardcoded lists.
+On Linux it checks `/proc/$pid/environ` for `DISPLAY=` or `WAYLAND_DISPLAY=`.
+On Windows it checks `MainWindowHandle != 0` via PowerShell.
+
+When you click the notification, `focus.js` reads the saved PID and calls the platform's focus function — no guessing, no hardcoded app names.

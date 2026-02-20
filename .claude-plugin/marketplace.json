@@ -1,0 +1,25 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "prabhavagrawal7",
+  "owner": {
+    "name": "Prabhav Agrawal"
+  },
+  "metadata": {
+    "description": "Plugins by Prabhav Agrawal"
+  },
+  "plugins": [
+    {
+      "name": "claude-ping",
+      "source": ".",
+      "description": "Desktop notification when Claude needs your attention — clicking it focuses the exact terminal or IDE where Claude is waiting.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Prabhav Agrawal"
+      },
+      "homepage": "https://github.com/prabhavagrawal7/claude-ping",
+      "repository": "https://github.com/prabhavagrawal7/claude-ping",
+      "license": "MIT",
+      "keywords": ["notification", "terminal", "focus", "productivity"]
+    }
+  ]
+}

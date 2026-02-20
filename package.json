@@ -1,0 +1,14 @@
+{
+  "name": "claude-ping",
+  "version": "1.0.0",
+  "description": "Claude Code plugin: macOS notification with click-to-focus for any terminal or IDE",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node src/notify.js < /dev/null"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "Prabhav Agrawal",
+  "license": "MIT"
+}
