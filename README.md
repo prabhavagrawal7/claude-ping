@@ -38,6 +38,8 @@ The terminal is detected by walking up the `PPID` chain until a GUI app process 
 
 ## Requirements
 
+No `.zshrc` or shell config changes needed. The plugin inherits your terminal's environment when hooks run, and uses the full path to your Node.js binary for notification clicks — so PATH is never an issue.
+
 ### macOS
 - Node.js ≥ 18
 - [`terminal-notifier`](https://github.com/julienXX/terminal-notifier): `brew install terminal-notifier`
@@ -74,19 +76,22 @@ claude --plugin-dir ./claude-ping
 ```
 claude-ping/
 ├── .claude-plugin/
-│   └── plugin.json          # plugin metadata
-├── hooks/
-│   └── hooks.json           # SessionStart, SessionEnd, Stop, Notification hooks
-├── src/
-│   ├── notify.js            # Stop/Notification hook: parses message, finds PID, notifies
-│   ├── focus.js             # Notification click handler: focuses the terminal window
-│   ├── session-start.js     # SessionStart hook: saves terminal PID
-│   ├── session-end.js       # SessionEnd hook: cleans up
-│   ├── pid.js               # Cross-platform process tree walker
-│   └── platform/
-│       ├── darwin.js        # macOS: terminal-notifier + osascript
-│       ├── linux.js         # Linux: dunstify/notify-send + xdotool/wmctrl
-│       └── win32.js         # Windows: BurntToast + SetForegroundWindow
+│   └── marketplace.json     # marketplace catalog
+├── plugin/                  # the installable plugin
+│   ├── .claude-plugin/
+│   │   └── plugin.json      # plugin metadata
+│   ├── hooks/
+│   │   └── hooks.json       # SessionStart, SessionEnd, Stop, Notification hooks
+│   └── src/
+│       ├── notify.js        # Stop/Notification hook: parses message, finds PID, notifies
+│       ├── focus.js         # Notification click handler: focuses the terminal window
+│       ├── session-start.js # SessionStart hook: saves terminal PID
+│       ├── session-end.js   # SessionEnd hook: cleans up
+│       ├── pid.js           # Cross-platform process tree walker
+│       └── platform/
+│           ├── darwin.js    # macOS: terminal-notifier + osascript
+│           ├── linux.js     # Linux: dunstify/notify-send + xdotool/wmctrl
+│           └── win32.js     # Windows: BurntToast + SetForegroundWindow
 └── README.md
 ```
 
