@@ -24,14 +24,14 @@ jobs:
 
       - name: Syntax check
         run: |
-          node --check src/pid.js
-          node --check src/notify.js
-          node --check src/focus.js
-          node --check src/session-start.js
-          node --check src/session-end.js
-          node --check src/platform/darwin.js
-          node --check src/platform/linux.js
-          node --check src/platform/win32.js
+          node --check plugin/src/pid.js
+          node --check plugin/src/notify.js
+          node --check plugin/src/focus.js
+          node --check plugin/src/session-start.js
+          node --check plugin/src/session-end.js
+          node --check plugin/src/platform/darwin.js
+          node --check plugin/src/platform/linux.js
+          node --check plugin/src/platform/win32.js
 
       - name: Run smoke tests
         run: node test/smoke.js

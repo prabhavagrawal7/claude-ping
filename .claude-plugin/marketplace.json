@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "claude-ping",
-      "source": ".",
+      "source": "./plugin",
       "description": "Desktop notification when Claude needs your attention — clicking it focuses the exact terminal or IDE where Claude is waiting.",
       "version": "1.0.0",
       "author": {
