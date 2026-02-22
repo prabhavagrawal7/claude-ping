@@ -23,10 +23,11 @@ function ps(script, timeout = 12000) {
  * the correct terminal window to the foreground.
  *
  * @param {string} message
- * @param {string} focusScriptPath  Absolute path to focus.js
- * @param {number} [terminalPid]    PID of the terminal window to focus on click
+ * @param {number|null} terminalPid  PID of the terminal window to focus on click
+ * @param {string|null} appName      Unused on Windows (kept for uniform signature)
  */
-function notify(message, focusScriptPath, terminalPid) {
+function notify(message, terminalPid, appName) {
+  const focusScriptPath = require('path').join(__dirname, '../focus/win32.js');
   // Sanitise for XML and for PowerShell single-quoted string
   const xmlSafe = message
     .replace(/&/g, '&amp;')

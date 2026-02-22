@@ -17,11 +17,13 @@ function exec(cmd) {
 
 /**
  * Send a Linux desktop notification via notify-send.
- * On click, focus is handled by a background watcher written to a signal file.
+ * On click, focus is handled via dunstify action → focus/linux.js.
  * @param {string} message
- * @param {string} focusScriptPath
+ * @param {number|null} terminalPid
+ * @param {string|null} appName  Unused on Linux (kept for uniform signature)
  */
-function notify(message, focusScriptPath) {
+function notify(message, terminalPid, appName) {
+  const focusScriptPath = path.join(__dirname, '../focus/linux.js');
   const safeMsg = message.replace(/"/g, '\\"');
   const nodeBin = process.execPath;
 

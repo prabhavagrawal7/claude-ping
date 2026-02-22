@@ -45,9 +45,9 @@ function findTerminalPidWin32() {
     const parts = line.split(/\s+/);
     const sessionPid = parseInt(parts[0], 10) || null;
     const terminalPid = parseInt(parts[1], 10) || null;
-    return { sessionPid, terminalPid };
+    return { sessionPid, terminalPid, appName: null };
   }
-  return { sessionPid: null, terminalPid: null };
+  return { sessionPid: null, terminalPid: null, appName: null };
 }
 
 /**
@@ -63,11 +63,14 @@ function findTerminalPidUnix() {
     const parentPath = exec(`ps -p ${ppid} -o comm=`);
 
     if (isGuiAppUnix(ppid, parentPath)) {
-      return { sessionPid: pid, terminalPid: ppid };
+      // Extract app name from .app bundle path: /Applications/Ghostty.app/Contents/MacOS/... → "Ghostty"
+      const m = parentPath.match(/\/([^/]+)\.app\/Contents\/MacOS\//);
+      const appName = m ? m[1] : null;
+      return { sessionPid: pid, terminalPid: ppid, appName };
     }
     pid = ppid;
   }
-  return { sessionPid: null, terminalPid: null };
+  return { sessionPid: null, terminalPid: null, appName: null };
 }
 
 function isGuiAppUnix(pid, processPath) {

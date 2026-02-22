@@ -38,9 +38,9 @@ function main() {
     : (text || 'Claude needs your attention');
 
   // Walk the process tree to find the host terminal
-  const { sessionPid, terminalPid } = findTerminalPid();
+  const { sessionPid, terminalPid, appName } = findTerminalPid();
 
-  // Persist the terminal PID so focus.js can read it on notification click
+  // Persist the terminal PID as a fallback for focus scripts
   if (terminalPid) {
     fs.writeFileSync(path.join(os.tmpdir(), 'claude_terminal_pid'), String(terminalPid));
   }
@@ -51,9 +51,8 @@ function main() {
     if (tty) platform.ringBell(tty);
   }
 
-  // Send the notification; clicking it will run focus.js
-  const focusScript = path.join(__dirname, 'focus.js');
-  platform.notify(message, focusScript, terminalPid);
+  // Send the notification; each platform manages its own focus entry point
+  platform.notify(message, terminalPid, appName);
 }
 
 main();

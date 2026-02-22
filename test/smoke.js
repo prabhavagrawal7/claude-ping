@@ -111,18 +111,39 @@ test(`correct platform module loads for ${process.platform}`, () => {
 // ── pid.js logic ────────────────────────────────────────────────────────────
 console.log('\npid.js logic');
 
-test('findTerminalPid returns an object with sessionPid and terminalPid keys', () => {
+test('findTerminalPid returns an object with sessionPid, terminalPid, and appName keys', () => {
   const { findTerminalPid } = require(path.join(PLUGIN, 'src/pid'));
   const result = findTerminalPid();
   assert.ok(typeof result === 'object', 'should return an object');
   assert.ok('sessionPid' in result, 'missing sessionPid');
   assert.ok('terminalPid' in result, 'missing terminalPid');
+  assert.ok('appName' in result, 'missing appName');
+  assert.ok(result.appName === null || typeof result.appName === 'string', 'appName must be null or string');
 });
 
 test('getTtyDevice returns null or a string', () => {
   const { getTtyDevice } = require(path.join(PLUGIN, 'src/pid'));
   const result = getTtyDevice(1);
   assert.ok(result === null || typeof result === 'string');
+});
+
+// ── focus/ scripts ──────────────────────────────────────────────────────────
+console.log('\nfocus/ scripts');
+
+for (const platform of ['darwin', 'win32', 'linux']) {
+  test(`plugin/src/focus/${platform}.js exists`, () => {
+    const p = path.join(PLUGIN, `src/focus/${platform}.js`);
+    assert.ok(fs.existsSync(p), `missing ${p}`);
+  });
+}
+
+test('plugin/src/focus/darwin.js is a valid Node module (no syntax errors)', () => {
+  const result = require('child_process').spawnSync(
+    process.execPath,
+    ['--check', path.join(PLUGIN, 'src/focus/darwin.js')],
+    { encoding: 'utf8' }
+  );
+  assert.strictEqual(result.status, 0, result.stderr);
 });
 
 // ── Summary ─────────────────────────────────────────────────────────────────
